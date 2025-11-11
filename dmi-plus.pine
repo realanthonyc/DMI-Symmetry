@@ -4,7 +4,7 @@
 //@version=6
 // ------------------------------------------------------------------
 // Directional Movement Index Symmetry
-// v1.2.8
+// v1.3.0
 // ------------------------------------------------------------------
 indicator(title="Directional Movement Index Symmetry", shorttitle="DMIS", format=format.price, precision=2, timeframe="", timeframe_gaps=true)
 
@@ -17,9 +17,9 @@ len    = input.int(14, title="DI Length", minval=1)
 // Additional smoothing of DI
 emaSmooth = input.int(1, title="Additional DI Smoothing (EMA)", minval=1, step=1, tooltip="1 means no smoothing")
 
-// Mid-level and Reference band
-midSmooth = input.int(9, title="Mid-Level Smoothing (EMA)", minval=1, step=1, group="Mid-Level & Band", tooltip="1 means no smoothing\n" + "The Mid-Level line reflects overall market activity or total momentum, while ADX measures directional consensus.")
-bandHalf = input.float(5.0, title="Reference Band Width (±)", minval=0, group="Mid-Level & Band")
+// Symmetry Line and Reference band
+midSmooth = input.int(9, title="Symmetry Line Smoothing (EMA)", minval=1, step=1, group="Symmetry Line & Band", tooltip="1 means no smoothing\n" + "The Symmetry Line reflects overall market activity or total momentum, while ADX measures directional consensus.")
+bandHalf = input.float(5.0, title="Reference Band Width (±)", minval=0, group="Symmetry Line & Band")
 
 // === DMI Calculation ===
 up  = ta.change(high)
@@ -36,17 +36,17 @@ minus = emaSmooth == 1 ? minusRaw : ta.ema(minusRaw, emaSmooth)
 sum = plus + minus
 adx = 100 * ta.rma(math.abs(plus - minus) / (sum == 0 ? 1 : sum), lensig)
 
-// === Mid-Level Calculation ===
-rawMidLevel   = (plus + minus) / 2
-finalMidLevel = midSmooth == 1 ? rawMidLevel : ta.ema(rawMidLevel, midSmooth)
-upperLevel = finalMidLevel + bandHalf
-lowerLevel = finalMidLevel - bandHalf
+// === Symmetry Line Calculation ===
+rawSymLine   = (plus + minus) / 2
+finalSymLine = midSmooth == 1 ? rawSymLine : ta.ema(rawSymLine, midSmooth)
+upperLevel = finalSymLine + bandHalf
+lowerLevel = finalSymLine - bandHalf
 
 // === Plotting ===
 // ADX
 plot(adx, title="ADX", color=color.new(#ffbb00, 80), style=plot.style_area, linewidth=1, display=display.none)
-// Mid-level and Reference band
-plot(finalMidLevel, title="Mid-Level Line", color=color.new(#666666, 70), linewidth=1, style=plot.style_line)
+// Symmetry Line and Reference band
+plot(finalSymLine, title="Symmetry Line", color=color.new(#666666, 70), linewidth=1, style=plot.style_line)
 pU = plot(upperLevel, title="Upper Band Line", color=color.new(#666666, 80), display=display.none)
 pL = plot(lowerLevel, title="Lower Band Line", color=color.new(#666666, 80), display=display.none)
 fill(pU, pL, color=color.new(#9eeaff, 80), title="Reference Band")
