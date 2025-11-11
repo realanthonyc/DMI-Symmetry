@@ -3,76 +3,53 @@
 
 //@version=6
 // ------------------------------------------------------------------
-// Directional Movement Index Plus
-// v1.1.7
+// Directional Movement Index Symmetry
+// v1.2.8
 // ------------------------------------------------------------------
-indicator(title="Directional Movement Index Plus", shorttitle="DMI Plus", format=format.price, precision=2, timeframe="", timeframe_gaps=true)
+indicator(title="Directional Movement Index Symmetry", shorttitle="DMIS", format=format.price, precision=2, timeframe="", timeframe_gaps=true)
 
 // === Inputs ===
 
 // ADX & DI calculation periods
 lensig = input.int(14, title="ADX Smoothing", minval=1)
-len = input.int(14, title="DI Length", minval=1)
+len    = input.int(14, title="DI Length", minval=1)
 
-// DI additional smoothing
+// Additional smoothing of DI
 emaSmooth = input.int(1, title="Additional DI Smoothing (EMA)", minval=1, step=1, tooltip="1 means no smoothing")
 
-// Manual Mid Level (used when auto is OFF)
-manualMidLevel = input.float(25.0, title="Mid Level (Manual)", step=0.1, group='Reference Band')
-
-// Auto-calculate Mid Level
-autoMid = input.bool(false, title="Auto Calculation of the Mid-Level", tooltip="When enabled, Mid-Level is calculated from recent +DI/-DI cross points.", group='Reference Band')
-
-// Number of recent crosses to average (for auto mode)
-crossLookback = input.int(3, title="Lookback for Auto Mid-Level", minval=1, maxval=100, tooltip="Number of recent +DI/-DI crosses to average for auto Mid-Level.", group='Reference Band')
-
-// Editable band width
-bandHalf = input.float(5.0, title="Reference Band Width (±)", minval=0, group='Reference Band')
+// Mid-level and Reference band
+midSmooth = input.int(9, title="Mid-Level Smoothing (EMA)", minval=1, step=1, group="Mid-Level & Band", tooltip="1 means no smoothing\n" + "The Mid-Level line reflects overall market activity or total momentum, while ADX measures directional consensus.")
+bandHalf = input.float(5.0, title="Reference Band Width (±)", minval=0, group="Mid-Level & Band")
 
 // === DMI Calculation ===
-up = ta.change(high)
+up  = ta.change(high)
 down = -ta.change(low)
-plusDM = na(up)  ? na : (up > down and up > 0 ? up : 0)
+plusDM  = na(up)  ? na : (up > down and up > 0 ? up : 0)
 minusDM = na(down) ? na : (down > up and down > 0 ? down : 0)
-trur = ta.rma(ta.tr, len)
-plusRaw = fixnan(100 * ta.rma(plusDM,  len) / trur)
+trur    = ta.rma(ta.tr, len)
+plusRaw  = fixnan(100 * ta.rma(plusDM,  len) / trur)
 minusRaw = fixnan(100 * ta.rma(minusDM, len) / trur)
 
-plus = emaSmooth == 1 ? plusRaw  : ta.ema(plusRaw,  emaSmooth)
+plus  = emaSmooth == 1 ? plusRaw  : ta.ema(plusRaw,  emaSmooth)
 minus = emaSmooth == 1 ? minusRaw : ta.ema(minusRaw, emaSmooth)
 
 sum = plus + minus
 adx = 100 * ta.rma(math.abs(plus - minus) / (sum == 0 ? 1 : sum), lensig)
 
-// === Auto Mid-Level (Average of recent N crosses) ===
-var float[] crossLevels = array.new_float()
-crossUp   = ta.crossover(plus, minus)
-crossDown = ta.crossunder(plus, minus)
-
-if crossUp or crossDown
-    array.push(crossLevels, (plus + minus) / 2)
-    // Keep only recent N crosses
-    if array.size(crossLevels) > crossLookback
-        array.shift(crossLevels)
-
-// Calculate average of recent crosses
-autoConverge = array.size(crossLevels) > 0 ? array.avg(crossLevels) : 25
-
-// Final Mid Level
-finalMidLevel = autoMid ? autoConverge : manualMidLevel
-
-// === Derived reference band ===
+// === Mid-Level Calculation ===
+rawMidLevel   = (plus + minus) / 2
+finalMidLevel = midSmooth == 1 ? rawMidLevel : ta.ema(rawMidLevel, midSmooth)
 upperLevel = finalMidLevel + bandHalf
 lowerLevel = finalMidLevel - bandHalf
 
 // === Plotting ===
-plot(adx, title="ADX", color=color.new(#ffbb00, 80), style=plot.style_area, linewidth=3, display=display.none)
-
-pU = plot(upperLevel, title="Upper Band Ref", color=color.new(#666666, 80), display=display.none)
-pL = plot(lowerLevel, title="Lower Band Ref", color=color.new(#666666, 80), display=display.none)
-fill(pU, pL, color=color.new(#eeeeee, 50), title="Reference Fill")
-
-plot(finalMidLevel, title="Mid Level", color=color.new(#666666, 80), linewidth=2, style=plot.style_line)
-
+// ADX
+plot(adx, title="ADX", color=color.new(#ffbb00, 80), style=plot.style_area, linewidth=1, display=display.none)
+// Mid-level and Reference band
+plot(finalMidLevel, title="Mid-Level Line", color=color.new(#666666, 70), linewidth=1, style=plot.style_line)
+pU = plot(upperLevel, title="Upper Band Line", color=color.new(#666666, 80), display=display.none)
+pL = plot(lowerLevel, title="Lower Band Line", color=color.new(#666666, 80), display=display.none)
+fill(pU, pL, color=color.new(#9eeaff, 80), title="Reference Band")
+// DI
 plot(plus,  title="+DI", color=color.rgb(145, 221, 95), linewidth=2)
 plot(minus, title="-DI", color=color.rgb(255, 108, 108), linewidth=2)

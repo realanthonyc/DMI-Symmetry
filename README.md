@@ -1,2 +1,2 @@
 # DMI Plus
-DMI Plus for TradingView
+Directional Movement Index Symmetry (DMIS) for TradingView
