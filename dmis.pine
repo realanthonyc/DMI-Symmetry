@@ -3,10 +3,11 @@
 
 //@version=6
 // ------------------------------------------------------------------
-// Directional Movement Index Symmetry
-// v1.3.0
+//  DMI (Directional Movement Index) Symmetry
+//  On Github: https://github.com/realanthonyc/DMI-Symmetry
+//  v1.3.1
 // ------------------------------------------------------------------
-indicator(title="Directional Movement Index Symmetry", shorttitle="DMIS", format=format.price, precision=2, timeframe="", timeframe_gaps=true)
+indicator(title="DMI Symmetry", shorttitle="DMIS", format=format.price, precision=2, timeframe="", timeframe_gaps=true)
 
 // === Inputs ===
 
