@@ -5,36 +5,46 @@
 // ------------------------------------------------------------------
 //  DMI Symmetry (Directional Movement Index Symmetry)
 //  On Github: https://github.com/realanthonyc/DMI-Symmetry
-//  v1.3.2
+//  v1.3.7
 // ------------------------------------------------------------------
 indicator(title="DMI Symmetry", shorttitle="DMIS", format=format.price, precision=2, timeframe="", timeframe_gaps=true)
 
 // === Inputs ===
-// DI & ADX
-len = input.int(14, title="DI length", minval=1, tooltip="DI length controls the tempo and smoothness of the DMI system:\n" + "Smaller value makes the DI lines more sensitive and volatile, giving frequent but noisier crossovers; larger value smooths them out, producing fewer, slower, but steadier lines.\n" + "Adjust this value per timeframe so the crossover frequency fits your analysis.")
-emaSmooth = input.int(1, title="EMA smoothing for DI", minval=1, step=1, tooltip="Additional EMA smoothing for the DI lines\n" + "(1 means no smoothing)")
-lensig = input.int(14, title="ADX smoothing", minval=1)
+// DI Length Configuration
+diLenGroup = "DI Lengths for Different Timeframes"
+len15OrBelow = input.int(7, title="DI length for 15m or below", minval=1, group=diLenGroup, tooltip="DI length controls the tempo and smoothness of the DMI system:\n" + "Smaller value makes the DI lines more sensitive and volatile, giving frequent but noisier crossovers; larger value smooths them out, producing fewer, slower, but steadier lines.\n" + "Adjust per timeframe so the crossover frequency fits your analysis.")
+len30mTo4h = input.int(9, title="DI length for 30m to 4h", minval=1, group=diLenGroup)
+len1DOrAbove = input.int(14, title="DI length for 1D or above", minval=1, group=diLenGroup)
+lenFallback = input.int(14, title="Fallback DI length", minval=1, group=diLenGroup, tooltip="Used for tick charts or when the chart timeframe cannot be detected")
+tfSeconds = timeframe.in_seconds(timeframe.period)
+fifteenMinutes = 15 * 60
+thirtyMinutes = 30 * 60
+oneDay = 24 * 60 * 60
+len = na(tfSeconds) ? lenFallback : tfSeconds <= fifteenMinutes ? len15OrBelow : tfSeconds >= oneDay ? len1DOrAbove : tfSeconds >= thirtyMinutes ? len30mTo4h : len30mTo4h
+// Smoothing
+emaSmooth = input.int(1, title="EMA smoothing for DI", minval=1, step=1, group="Smoothing", tooltip="Additional EMA smoothing for the DI lines\n" + "(1 means no smoothing)")
+lensig = input.int(14, title="ADX smoothing", minval=1, group="Smoothing")
 // Symmetry Line and Reference Band
 midSmooth = input.int(9, title="Symmetry Line EMA smoothing", minval=1, step=1, group="Symmetry Line & Band", tooltip="The Symmetry Line reflects overall market activity or total momentum, while ADX measures directional consensus.\n" + "(1 means no smoothing)")
-bandHalf = input.float(5.0, title="Reference Band's width (±)", minval=0, group="Symmetry Line & Band")
+bandHalf = input.float(5.0, title="Width of Reference Band (±)", minval=0, group="Symmetry Line & Band")
 
 // === DMI Calculation ===
 up = ta.change(high)
 down = -ta.change(low)
-plusDM = na(up)  ? na : (up > down and up > 0 ? up : 0)
+plusDM = na(up) ? na : (up > down and up > 0 ? up : 0)
 minusDM = na(down) ? na : (down > up and down > 0 ? down : 0)
 trur = ta.rma(ta.tr, len)
-plusRaw = fixnan(100 * ta.rma(plusDM,  len) / trur)
+plusRaw = fixnan(100 * ta.rma(plusDM, len) / trur)
 minusRaw = fixnan(100 * ta.rma(minusDM, len) / trur)
 
-plus = emaSmooth == 1 ? plusRaw  : ta.ema(plusRaw,  emaSmooth)
+plus = emaSmooth == 1 ? plusRaw : ta.ema(plusRaw, emaSmooth)
 minus = emaSmooth == 1 ? minusRaw : ta.ema(minusRaw, emaSmooth)
 
 sum = plus + minus
 adx = 100 * ta.rma(math.abs(plus - minus) / (sum == 0 ? 1 : sum), lensig)
 
 // === Symmetry Line Calculation ===
-rawSymLine   = (plus + minus) / 2
+rawSymLine = (plus + minus) / 2
 finalSymLine = midSmooth == 1 ? rawSymLine : ta.ema(rawSymLine, midSmooth)
 upperLevel = finalSymLine + bandHalf
 lowerLevel = finalSymLine - bandHalf
@@ -48,5 +58,11 @@ pU = plot(upperLevel, title="Upper Band Line", color=color.new(#666666, 80), dis
 pL = plot(lowerLevel, title="Lower Band Line", color=color.new(#666666, 80), display=display.none)
 fill(pU, pL, color=color.new(#9eeaff, 80), title="Reference Band")
 // DI
-plot(plus,  title="+DI", color=color.rgb(145, 221, 95), linewidth=2)
+plot(plus, title="+DI", color=color.rgb(145, 221, 95), linewidth=2)
 plot(minus, title="-DI", color=color.rgb(255, 108, 108), linewidth=2)
+
+// === Alerts ===
+bullishConfirmed = ta.crossover(plus, minus)[2] and plus[1] > minus[1] and plus > minus
+bearishConfirmed = ta.crossunder(plus, minus)[2] and minus[1] > plus[1] and minus > plus
+alertcondition(bullishConfirmed, title="Bullish", message="+DI crossed above -DI and held for 2 bars")
+alertcondition(bearishConfirmed, title="Bearish", message="-DI crossed below +DI and held for 2 bars")
