@@ -5,28 +5,28 @@
 // ------------------------------------------------------------------
 //  DMI Symmetry (Directional Movement Index Symmetry)
 //  On Github: https://github.com/realanthonyc/DMI-Symmetry
-//  v1.3.7
+//  v1.3.8
 // ------------------------------------------------------------------
 indicator(title="DMI Symmetry", shorttitle="DMIS", format=format.price, precision=2, timeframe="", timeframe_gaps=true)
 
 // === Inputs ===
-// DI Length Configuration
+// DI Lengths
 diLenGroup = "DI Lengths for Different Timeframes"
-len15OrBelow = input.int(7, title="DI length for 15m or below", minval=1, group=diLenGroup, tooltip="DI length controls the tempo and smoothness of the DMI system:\n" + "Smaller value makes the DI lines more sensitive and volatile, giving frequent but noisier crossovers; larger value smooths them out, producing fewer, slower, but steadier lines.\n" + "Adjust per timeframe so the crossover frequency fits your analysis.")
-len30mTo4h = input.int(9, title="DI length for 30m to 4h", minval=1, group=diLenGroup)
-len1DOrAbove = input.int(14, title="DI length for 1D or above", minval=1, group=diLenGroup)
+lenLow = input.int(7, title="DI length for 15m or below", minval=1, group=diLenGroup, tooltip="DI length controls the tempo and smoothness of the DMI system:\n" + "Smaller value makes the DI lines more sensitive and volatile, giving frequent but noisier crossovers; larger value smooths them out, producing fewer, slower, but steadier lines.\n" + "Adjust per timeframe so the crossover frequency fits your analysis.")
+lenMid = input.int(9, title="DI length for 30m to below 1D", minval=1, group=diLenGroup)
+lenRegular = input.int(14, title="DI length for 1D or above", minval=1, group=diLenGroup)
 lenFallback = input.int(14, title="Fallback DI length", minval=1, group=diLenGroup, tooltip="Used for tick charts or when the chart timeframe cannot be detected")
 tfSeconds = timeframe.in_seconds(timeframe.period)
+isDailyOrAbove = timeframe.isdaily or timeframe.isweekly or timeframe.ismonthly
 fifteenMinutes = 15 * 60
 thirtyMinutes = 30 * 60
-oneDay = 24 * 60 * 60
-len = na(tfSeconds) ? lenFallback : tfSeconds <= fifteenMinutes ? len15OrBelow : tfSeconds >= oneDay ? len1DOrAbove : tfSeconds >= thirtyMinutes ? len30mTo4h : len30mTo4h
-// Smoothing
-emaSmooth = input.int(1, title="EMA smoothing for DI", minval=1, step=1, group="Smoothing", tooltip="Additional EMA smoothing for the DI lines\n" + "(1 means no smoothing)")
-lensig = input.int(14, title="ADX smoothing", minval=1, group="Smoothing")
+len = isDailyOrAbove ? lenRegular : na(tfSeconds) ? lenFallback : tfSeconds <= fifteenMinutes ? lenLow : tfSeconds >= thirtyMinutes ? lenMid : lenMid
 // Symmetry Line and Reference Band
-midSmooth = input.int(9, title="Symmetry Line EMA smoothing", minval=1, step=1, group="Symmetry Line & Band", tooltip="The Symmetry Line reflects overall market activity or total momentum, while ADX measures directional consensus.\n" + "(1 means no smoothing)")
-bandHalf = input.float(5.0, title="Width of Reference Band (±)", minval=0, group="Symmetry Line & Band")
+midSmooth = input.int(9, title="EMA smoothing for Symmetry Line", minval=1, step=1, group="Symmetry Line & Band", tooltip="The Symmetry Line reflects overall market activity or total momentum, while ADX measures directional consensus.\n" + "(1 means no smoothing)")
+bandHalf = input.float(5.0, title="Reference Band Width (±)", minval=0, group="Symmetry Line & Band")
+// Other Configurations
+emaSmooth = input.int(1, title="EMA smoothing for DI Lines", minval=1, step=1, group="Other Configurations", tooltip="Additional EMA smoothing for the DI lines\n" + "(1 means no smoothing)")
+lensig = input.int(14, title="ADX smoothing", minval=1, group="Other Configurations")
 
 // === DMI Calculation ===
 up = ta.change(high)
