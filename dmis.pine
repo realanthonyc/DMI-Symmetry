@@ -5,7 +5,7 @@
 // ------------------------------------------------------------------
 //  DMI Symmetry (Directional Movement Index Symmetry)
 //  On Github: https://github.com/realanthonyc/DMI-Symmetry
-//  v1.3.8
+//  v1.3.9
 // ------------------------------------------------------------------
 indicator(title="DMI Symmetry", shorttitle="DMIS", format=format.price, precision=2, timeframe="", timeframe_gaps=true)
 
@@ -64,5 +64,5 @@ plot(minus, title="-DI", color=color.rgb(255, 108, 108), linewidth=2)
 // === Alerts ===
 bullishConfirmed = ta.crossover(plus, minus)[2] and plus[1] > minus[1] and plus > minus
 bearishConfirmed = ta.crossunder(plus, minus)[2] and minus[1] > plus[1] and minus > plus
-alertcondition(bullishConfirmed, title="Bullish", message="+DI crossed above -DI and held for 2 bars")
-alertcondition(bearishConfirmed, title="Bearish", message="-DI crossed below +DI and held for 2 bars")
+alertcondition(bullishConfirmed, title="Bullish Alert", message="+DI crossed above -DI and held for two bars")
+alertcondition(bearishConfirmed, title="Bearish Alert", message="-DI crossed below +DI and held for two bars")
