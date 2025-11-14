@@ -5,7 +5,7 @@
 // ------------------------------------------------------------------
 //  DMI Symmetry (Directional Movement Index Symmetry)
 //  On Github: https://github.com/realanthonyc/DMI-Symmetry
-//  v1.3.9
+//  v1.4.0
 // ------------------------------------------------------------------
 indicator(title="DMI Symmetry", shorttitle="DMIS", format=format.price, precision=2, timeframe="", timeframe_gaps=true)
 
@@ -20,7 +20,7 @@ tfSeconds = timeframe.in_seconds(timeframe.period)
 isDailyOrAbove = timeframe.isdaily or timeframe.isweekly or timeframe.ismonthly
 fifteenMinutes = 15 * 60
 thirtyMinutes = 30 * 60
-len = isDailyOrAbove ? lenRegular : na(tfSeconds) ? lenFallback : tfSeconds <= fifteenMinutes ? lenLow : tfSeconds >= thirtyMinutes ? lenMid : lenMid
+len = isDailyOrAbove ? lenRegular : na(tfSeconds) ? lenFallback : tfSeconds <= fifteenMinutes ? lenLow : lenMid
 // Symmetry Line and Reference Band
 midSmooth = input.int(9, title="EMA smoothing for Symmetry Line", minval=1, step=1, group="Symmetry Line & Band", tooltip="The Symmetry Line reflects overall market activity or total momentum, while ADX measures directional consensus.\n" + "(1 means no smoothing)")
 bandHalf = input.float(5.0, title="Reference Band Width (±)", minval=0, group="Symmetry Line & Band")
@@ -58,8 +58,8 @@ pU = plot(upperLevel, title="Upper Band Line", color=color.new(#666666, 80), dis
 pL = plot(lowerLevel, title="Lower Band Line", color=color.new(#666666, 80), display=display.none)
 fill(pU, pL, color=color.new(#9eeaff, 80), title="Reference Band")
 // DI
-plot(plus, title="+DI", color=color.rgb(145, 221, 95), linewidth=2)
-plot(minus, title="-DI", color=color.rgb(255, 108, 108), linewidth=2)
+plot(plus, title="+DI", color=color.new(#56B264, 0), linewidth=1)
+plot(minus, title="-DI", color=color.new(#FB4A55, 0), linewidth=1)
 
 // === Alerts ===
 bullishConfirmed = ta.crossover(plus, minus)[2] and plus[1] > minus[1] and plus > minus
